@@ -1,14 +1,15 @@
 {
-  "name": "my-project",
-  "version": "0.1.0",
+  "name": "sistema-votacion-parlamentaria",
+  "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "db:migrate": "node scripts/run-migrations.js",
-    "db:setup": "npm run db:migrate"
+    "db:setup": "node scripts/setup-db.js",
+    "db:migrate": "node scripts/run-migrations.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
