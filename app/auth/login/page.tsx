@@ -71,12 +71,6 @@ export default function LoginPage() {
     }
   };
 
-  const loadDemoAccount = (demoEmail: string, demoPassword: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    setErrorMessage('');
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4">
       <div className="w-full max-w-md">
@@ -139,52 +133,6 @@ export default function LoginPage() {
               {isLoading ? 'Iniciando...' : 'Iniciar Sesión'}
             </Button>
           </form>
-
-          <div className="mt-6 space-y-3 border-t border-slate-200 pt-6">
-            <p className="text-center text-sm font-medium text-slate-700 mb-3">
-              Cuentas de Prueba
-            </p>
-
-            <Button
-              type="button"
-              onClick={() =>
-                loadDemoAccount('admin@diputados.bo', 'Admin123!@#')
-              }
-              variant="outline"
-              className="w-full text-sm"
-              disabled={isLoading}
-            >
-              Admin
-            </Button>
-
-            <Button
-              type="button"
-              onClick={() =>
-                loadDemoAccount('parlamentario1@diputados.bo', 'Parl123!@#')
-              }
-              variant="outline"
-              className="w-full text-sm"
-              disabled={isLoading}
-            >
-              Parlamentario
-            </Button>
-
-            <Button
-              type="button"
-              onClick={() =>
-                loadDemoAccount('observador@diputados.bo', 'Obs123!@#')
-              }
-              variant="outline"
-              className="w-full text-sm"
-              disabled={isLoading}
-            >
-              Observador
-            </Button>
-          </div>
-
-          <p className="text-center text-xs text-slate-500 mt-6">
-            Nota: Las credenciales de prueba funcionan después de ejecutar {"'pnpm db:setup'"}
-          </p>
         </Card>
       </div>
     </div>
