@@ -39,7 +39,9 @@ const demoUsers = [
 ];
 
 async function createDemoUsers() {
-  console.log('[v0] Creating demo users...');
+  console.log('[v0] Creating demo users...\n');
+
+  const createdUsers = [];
 
   for (const user of demoUsers) {
     try {
@@ -51,9 +53,33 @@ async function createDemoUsers() {
       });
 
       if (authError) {
-        // Si el usuario ya existe, es ok
+        // Si el usuario ya existe, obtener su ID
         if (authError.message.includes('already exists')) {
-          console.log(`[v0] User ${user.email} already exists, skipping...`);
+          console.log(`[v0] User ${user.email} already exists, getting existing ID...`);
+          
+          // Intentar obtener el usuario existente
+          const { data: existingUsers } = await supabase.auth.admin.listUsers();
+          const existingUser = existingUsers?.users?.find(u => u.email === user.email);
+          
+          if (existingUser) {
+            // Actualizar perfil existente
+            const { error: profileError } = await supabase
+              .from('user_profiles')
+              .upsert({
+                id: existingUser.id,
+                email: user.email,
+                full_name: user.name,
+                role: user.role,
+              }, { onConflict: 'id' });
+
+            if (profileError) {
+              console.error(`[v0] Error updating profile for ${user.email}:`, profileError);
+              continue;
+            }
+
+            createdUsers.push({ ...user, id: existingUser.id, status: 'updated' });
+            console.log(`[v0] ✓ Updated user: ${user.email} (${user.role})`);
+          }
           continue;
         }
         throw authError;
@@ -77,19 +103,46 @@ async function createDemoUsers() {
         continue;
       }
 
+      createdUsers.push({ ...user, id: authUser.user.id, status: 'created' });
       console.log(`[v0] ✓ Created user: ${user.email} (${user.role})`);
+
+      // Si es parlamentario, crear registro en parliamentarians
+      if (user.role === 'parliamentarian') {
+        const parties = ['MAS', 'UN', 'CC'];
+        const party = parties[(createdUsers.length - 1) % parties.length];
+        
+        const { error: parlError } = await supabase
+          .from('parliamentarians')
+          .insert({
+            user_id: authUser.user.id,
+            full_name: user.name,
+            political_party: party,
+            circumscription: 'Cochabamba',
+            email: user.email,
+            is_active: true,
+          });
+
+        if (parlError && !parlError.message.includes('duplicate')) {
+          console.error(`[v0] Error creating parliamentarian record:`, parlError);
+        } else if (!parlError) {
+          console.log(`[v0]   └─ Added as parliamentarian (${party})`);
+        }
+      }
     } catch (error) {
-      console.error(`[v0] Error creating user ${user.email}:`, error);
+      console.error(`[v0] Error creating user ${user.email}:`, error.message);
     }
   }
 
-  console.log('[v0] Demo users creation completed!');
+  console.log('\n[v0] Demo users setup completed!');
   console.log('\n[v0] Demo Account Credentials:');
+  console.log('━'.repeat(50));
   demoUsers.forEach((user) => {
-    console.log(`  - Email: ${user.email}`);
-    console.log(`    Password: ${user.password}`);
-    console.log(`    Role: ${user.role}\n`);
+    console.log(`\nEmail:    ${user.email}`);
+    console.log(`Password: ${user.password}`);
+    console.log(`Role:     ${user.role}`);
   });
+  console.log('\n' + '━'.repeat(50));
+  console.log(`\nTotal users: ${createdUsers.length}/${demoUsers.length}`);
 }
 
 createDemoUsers().catch((error) => {
