@@ -12,18 +12,16 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage('');
 
     if (!email || !password) {
-      toast({
-        title: 'Error',
-        description: 'Por favor completa todos los campos',
-        variant: 'destructive',
-      });
+      setErrorMessage('Por favor completa todos los campos');
       return;
     }
 
@@ -36,11 +34,8 @@ export default function LoginPage() {
       });
 
       if (error) {
-        toast({
-          title: 'Error de login',
-          description: error.message,
-          variant: 'destructive',
-        });
+        console.error('[v0] Auth error:', error);
+        setErrorMessage(error.message || 'Error al iniciar sesión');
         return;
       }
 
@@ -70,14 +65,16 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error('[v0] Login error:', error);
-      toast({
-        title: 'Error',
-        description: 'Ocurrió un error durante el login',
-        variant: 'destructive',
-      });
+      setErrorMessage('Ocurrió un error durante el login. Verifica que Supabase esté configurado.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const loadDemoAccount = (demoEmail: string, demoPassword: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    setErrorMessage('');
   };
 
   return (
@@ -96,6 +93,12 @@ export default function LoginPage() {
           <h2 className="text-2xl font-bold mb-6 text-center text-slate-900">
             Iniciar Sesión
           </h2>
+
+          {errorMessage && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-md">
+              <p className="text-red-800 text-sm font-medium">{errorMessage}</p>
+            </div>
+          )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
@@ -137,8 +140,50 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-slate-600 mt-6">
-            Demo: Usa cualquier email y contraseña (sistema de prueba)
+          <div className="mt-6 space-y-3 border-t border-slate-200 pt-6">
+            <p className="text-center text-sm font-medium text-slate-700 mb-3">
+              Cuentas de Prueba
+            </p>
+
+            <Button
+              type="button"
+              onClick={() =>
+                loadDemoAccount('admin@diputados.bo', 'Admin123!@#')
+              }
+              variant="outline"
+              className="w-full text-sm"
+              disabled={isLoading}
+            >
+              Admin
+            </Button>
+
+            <Button
+              type="button"
+              onClick={() =>
+                loadDemoAccount('parlamentario1@diputados.bo', 'Parl123!@#')
+              }
+              variant="outline"
+              className="w-full text-sm"
+              disabled={isLoading}
+            >
+              Parlamentario
+            </Button>
+
+            <Button
+              type="button"
+              onClick={() =>
+                loadDemoAccount('observador@diputados.bo', 'Obs123!@#')
+              }
+              variant="outline"
+              className="w-full text-sm"
+              disabled={isLoading}
+            >
+              Observador
+            </Button>
+          </div>
+
+          <p className="text-center text-xs text-slate-500 mt-6">
+            Nota: Las credenciales de prueba funcionan después de ejecutar {"'pnpm db:setup'"}
           </p>
         </Card>
       </div>
