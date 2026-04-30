@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint .",
     "db:setup": "node scripts/setup-db.js",
-    "db:migrate": "node scripts/run-migrations.js"
+    "db:migrate": "node scripts/run-migrations.js",
+    "db:demo-users": "node scripts/create-demo-users.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

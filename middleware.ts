@@ -1,36 +1,27 @@
-import { type NextRequest } from 'next/server';
-import { updateSession } from '@supabase/ssr';
+import { type NextRequest, NextResponse } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  console.log('[v0] Middleware processing:', request.nextUrl.pathname);
-
   // Rutas públicas (sin protección)
   const publicRoutes = ['/auth/login', '/auth/register', '/public'];
   const isPublicRoute = publicRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
   );
 
+  // Si es ruta pública, permitir acceso
   if (isPublicRoute) {
-    return await updateSession(request);
+    return NextResponse.next();
   }
 
-  // Actualizar sesión de Supabase
-  let response = await updateSession(request);
+  // Para rutas protegidas, verificar si tiene cookie de sesión de Supabase
+  const cookieHeader = request.headers.get('cookie') || '';
+  const hasSession = cookieHeader.includes('sb-') || request.cookies.has('sb-auth-token');
 
-  // Obtener token de la sesión
-  const supabaseResponse = response.clone();
-  const cookies = supabaseResponse.headers.getSetCookie();
-
-  // Verificar autenticación para rutas protegidas
-  const authHeader = request.headers.get('authorization');
-  const hasSession = cookies.some((cookie) => cookie.includes('sb-'));
-
-  if (!authHeader && !hasSession && !isPublicRoute) {
+  if (!hasSession) {
     // Redirigir a login si no está autenticado
-    return Response.redirect(new URL('/auth/login', request.url));
+    return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
