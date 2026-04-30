@@ -1,31 +1,61 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { supabase } from '@/lib/supabase/client';
 import { Spinner } from '@/components/ui/spinner';
 
 export default function HomePage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading, userRole } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasTimeout, setHasTimeout] = useState(false);
 
   useEffect(() => {
-    if (!isLoading) {
-      if (isAuthenticated) {
-        // Redirigir según rol del usuario
-        if (userRole === 'admin') {
-          router.push('/admin');
-        } else if (userRole === 'parliamentarian') {
-          router.push('/parliamentarian');
+    const checkSessionAndRedirect = async () => {
+      try {
+        // Timeout de 5 segundos
+        const timeoutId = setTimeout(() => {
+          setHasTimeout(true);
+          router.push('/auth/login');
+        }, 5000);
+
+        // Obtener sesión actual
+        const { data: sessionData } = await supabase.auth.getSession();
+
+        clearTimeout(timeoutId);
+
+        if (sessionData?.session?.user) {
+          // Obtener perfil del usuario para determinar rol
+          const { data: profileData } = await supabase
+            .from('user_profiles')
+            .select('role')
+            .eq('id', sessionData.session.user.id)
+            .single();
+
+          const role = profileData?.role;
+
+          // Redirigir según rol
+          if (role === 'admin') {
+            router.push('/admin');
+          } else if (role === 'parliamentarian') {
+            router.push('/parliamentarian');
+          } else {
+            router.push('/public');
+          }
         } else {
-          router.push('/public');
+          // No hay sesión, ir a login
+          router.push('/auth/login');
         }
-      } else {
-        // Redirigir a login si no está autenticado
+      } catch (error) {
+        console.error('[v0] Redirect error:', error);
         router.push('/auth/login');
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }, [isAuthenticated, isLoading, userRole, router]);
+    };
+
+    checkSessionAndRedirect();
+  }, [router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
@@ -34,7 +64,9 @@ export default function HomePage() {
         <h1 className="text-3xl font-bold text-white mb-2">
           Sistema Parlamentario de Votación
         </h1>
-        <p className="text-slate-400">Cargando...</p>
+        <p className="text-slate-400">
+          {hasTimeout ? 'Redirigiendo...' : 'Cargando...'}
+        </p>
       </div>
     </div>
   );
