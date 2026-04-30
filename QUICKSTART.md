@@ -61,21 +61,14 @@ Después de ejecutar el seed data, tienes estos parlamentarios disponibles (20 t
 
 ## Crear Usuarios de Prueba
 
-En Supabase, ve a **Authentication > Users** y crea:
+La aplicación ahora crea un admin predeterminado automáticamente durante la configuración:
 
-1. **Admin**
-   - Email: `admin@test.bo`
-   - Password: (cualquiera)
+- **Email**: `admin@diputados.bo`
+- **Password**: `admin123`
 
-2. **Parlamentario**
-   - Email: `parlamentario@test.bo`
-   - Password: (cualquiera)
+Después de iniciar sesión como admin, puedes crear otros usuarios desde `/admin/users`.
 
-3. **Observador**
-   - Email: `observador@test.bo`
-   - Password: (cualquiera)
-
-Luego, en la tabla `user_profiles` de Supabase, asigna los roles:
+Si necesitas más cuentas manuales, crea el perfil en `user_profiles` y usa el rol correspondiente.
 
 ```sql
 UPDATE user_profiles SET role = 'admin' WHERE email = 'admin@test.bo';

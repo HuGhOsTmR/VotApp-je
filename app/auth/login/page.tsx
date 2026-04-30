@@ -138,7 +138,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-sm text-slate-600 mt-6">
-            Demo: Usa cualquier email y contraseña (sistema de prueba)
+            Demo: usa <strong>admin@diputados.bo</strong> / <strong>admin123</strong> para acceder al panel de admin.
           </p>
         </Card>
       </div>

@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '.env.local' });
+
 import fs from 'fs';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
@@ -40,59 +44,107 @@ async function setupDatabase() {
 
     console.log('✅ Scripts cargados');
 
-    // Ejecutar schema
-    console.log('\n🔨 Ejecutando schema...');
-    const { error: schemaError } = await supabase.rpc('exec_sql', {
-      sql: schemaSql,
-    }).catch(async () => {
-      // Si rpc no funciona, intentar con una ejecución directa
-      console.log('  (Usando método alternativo de ejecución)');
-      
-      // Dividir por statements
-      const statements = schemaSql
-        .split(';')
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-
-      for (const statement of statements) {
-        const { error } = await supabase.from('_migrations').insert({
-          name: 'schema',
-          executed_at: new Date().toISOString(),
-        }).catch(() => ({ error: null }));
-        
-        if (error && !error.message.includes('violates unique')) {
-          throw error;
-        }
-      }
-      
-      return { error: null };
-    });
-
-    if (schemaError && !schemaError.message?.includes('already exists')) {
-      throw schemaError;
+    // Verificar si las tablas ya existen
+    console.log('\n🔨 Verificando estado del schema...');
+    
+    let tablesExist = false;
+    try {
+      const { data: checkTables } = await supabase
+        .from('parliamentarians')
+        .select('id', { count: 'exact', head: true });
+      tablesExist = true;
+    } catch (err) {
+      console.log('  ℹ️  Las tablas no existen aún.');
     }
 
-    console.log('✅ Schema ejecutado exitosamente');
-
-    // Ejecutar seed
-    console.log('\n🌱 Ejecutando datos de ejemplo...');
-    const { error: seedError } = await supabase.rpc('exec_sql', {
-      sql: seedSql,
-    }).catch(async () => {
-      // Método alternativo
-      const seedStatements = seedSql
-        .split(';')
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-
-      console.log(`  (${seedStatements.length} statements para ejecutar)`);
-      return { error: null };
-    });
-
-    if (seedError) {
-      console.log('⚠️  Advertencia al ejecutar seed:', seedError.message);
+    if (!tablesExist) {
+      console.log('  📝 Ejecuta el schema en Supabase SQL editor:');
+      console.log('     Ir a Supabase > SQL Editor > New Query');
+      console.log('     Copiar contenido de: scripts/01_schema.sql');
+      console.log('     Ejecutar\n');
+      console.log('     Luego ejecuta el seed:');
+      console.log('     Copiar contenido de: scripts/02_seed.sql');
+      console.log('     Ejecutar\n');
     } else {
-      console.log('✅ Datos de ejemplo insertados');
+      console.log('✅ Schema detectado exitosamente');
+    }
+
+    // Asegurar usuario admin predeterminado
+    console.log('\n🔐 Asegurando cuenta de administrador...');
+    const adminEmail = 'admin@diputados.bo';
+    const adminPassword = 'admin123';
+    let adminUserId = null;
+
+    const { data: existingAuthUsers, error: authError } = await supabase
+      .from('auth.users')
+      .select('id,email')
+      .eq('email', adminEmail)
+      .single();
+
+    if (authError && authError.code !== 'PGRST116') {
+      console.warn('  No fue posible buscar la cuenta admin en auth.users:', authError.message);
+    }
+
+    if (existingAuthUsers?.id) {
+      adminUserId = existingAuthUsers.id;
+      console.log('  Cuenta admin existente encontrada. Actualizando contraseña.');
+      const { error: passwordError } = await supabase.auth.admin.updateUserById(adminUserId, {
+        password: adminPassword,
+      });
+
+      if (passwordError) {
+        console.warn('  No se pudo actualizar contraseña admin:', passwordError.message);
+      }
+    } else {
+      const { data: createData, error: createError } =
+        await supabase.auth.admin.createUser({
+          email: adminEmail,
+          password: adminPassword,
+          email_confirm: true,
+          user_metadata: { full_name: 'Admin Diputados' },
+        });
+
+      if (createError) {
+        if (createError.message.includes('already registered')) {
+          console.log('  La cuenta admin ya existe, omitiendo creación.');
+          const { data: existingUserAgain, error: existingErrorAgain } = await supabase
+            .from('auth.users')
+            .select('id,email')
+            .eq('email', adminEmail)
+            .single();
+
+          if (existingErrorAgain && existingErrorAgain.code !== 'PGRST116') {
+            console.warn(
+              '  No fue posible obtener el id del admin después de la creación fallida:',
+              existingErrorAgain.message
+            );
+          }
+
+          adminUserId = existingUserAgain?.id ?? null;
+        } else {
+          throw createError;
+        }
+      } else {
+        adminUserId = createData?.user?.id ?? null;
+      }
+    }
+
+    if (adminUserId) {
+      const { error: profileError } = await supabase.from('user_profiles').upsert([
+        {
+          id: adminUserId,
+          email: adminEmail,
+          full_name: 'Admin Diputados',
+          role: 'admin',
+          is_active: true,
+        },
+      ], { onConflict: 'id' });
+
+      if (profileError) {
+        console.warn('  No se pudo crear/actualizar el perfil admin:', profileError.message);
+      } else {
+        console.log('  Cuenta admin asegurada: admin@diputados.bo / admin123');
+      }
     }
 
     // Verificar que las tablas existan

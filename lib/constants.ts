@@ -178,6 +178,7 @@ export const CIRCUMSCRIPTIONS = [
 // ============ NAVEGACIÓN ============
 export const NAV_ITEMS_ADMIN = [
   { label: 'Dashboard', href: '/admin' },
+  { label: 'Usuarios', href: '/admin/users' },
   { label: 'Sesiones', href: '/admin/sessions' },
   { label: 'Mociones', href: '/admin/motions' },
   { label: 'Parlamentarios', href: '/admin/parliamentarians' },

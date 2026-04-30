@@ -119,6 +119,27 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, enti
 CREATE INDEX IF NOT EXISTS idx_attendance_session_id ON attendance(session_id);
 
 -- ROW LEVEL SECURITY (RLS) POLICIES
+-- Funciones auxiliares para verificar roles
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS(
+    SELECT 1 FROM user_profiles 
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION is_parliamentarian()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS(
+    SELECT 1 FROM user_profiles 
+    WHERE id = auth.uid() AND role = 'parliamentarian'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Habilitar RLS en todas las tablas
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE parliamentarians ENABLE ROW LEVEL SECURITY;
@@ -130,46 +151,46 @@ ALTER TABLE attendance ENABLE ROW LEVEL SECURITY;
 
 -- POLICIES para user_profiles
 CREATE POLICY "Admins can view all profiles" ON user_profiles
-  FOR SELECT USING (auth.jwt() ->> 'role' = 'admin');
+  FOR SELECT USING (is_admin());
 
 CREATE POLICY "Users can view their own profile" ON user_profiles
   FOR SELECT USING (auth.uid() = id);
 
 CREATE POLICY "Admins can create profiles" ON user_profiles
-  FOR INSERT WITH CHECK (auth.jwt() ->> 'role' = 'admin');
+  FOR INSERT WITH CHECK (is_admin());
 
 CREATE POLICY "Admins can update profiles" ON user_profiles
-  FOR UPDATE USING (auth.jwt() ->> 'role' = 'admin');
+  FOR UPDATE USING (is_admin());
 
 -- POLICIES para parliamentarians (visible a todos)
 CREATE POLICY "Anyone can view parliamentarians" ON parliamentarians
   FOR SELECT USING (true);
 
 CREATE POLICY "Admins can insert parliamentarians" ON parliamentarians
-  FOR INSERT WITH CHECK (auth.jwt() ->> 'role' = 'admin');
+  FOR INSERT WITH CHECK (is_admin());
 
 CREATE POLICY "Admins can update parliamentarians" ON parliamentarians
-  FOR UPDATE USING (auth.jwt() ->> 'role' = 'admin');
+  FOR UPDATE USING (is_admin());
 
 -- POLICIES para sessions
 CREATE POLICY "Anyone can view sessions" ON sessions
   FOR SELECT USING (true);
 
 CREATE POLICY "Admins can create sessions" ON sessions
-  FOR INSERT WITH CHECK (auth.jwt() ->> 'role' = 'admin');
+  FOR INSERT WITH CHECK (is_admin());
 
 CREATE POLICY "Admins can update sessions" ON sessions
-  FOR UPDATE USING (auth.jwt() ->> 'role' = 'admin');
+  FOR UPDATE USING (is_admin());
 
 -- POLICIES para motions
 CREATE POLICY "Anyone can view motions" ON motions
   FOR SELECT USING (true);
 
 CREATE POLICY "Admins can create motions" ON motions
-  FOR INSERT WITH CHECK (auth.jwt() ->> 'role' = 'admin');
+  FOR INSERT WITH CHECK (is_admin());
 
 CREATE POLICY "Admins can update motions" ON motions
-  FOR UPDATE USING (auth.jwt() ->> 'role' = 'admin');
+  FOR UPDATE USING (is_admin());
 
 -- POLICIES para votes (nominales y públicas)
 CREATE POLICY "Anyone can view votes" ON votes
@@ -177,7 +198,7 @@ CREATE POLICY "Anyone can view votes" ON votes
 
 CREATE POLICY "Parliamentarians can insert votes" ON votes
   FOR INSERT WITH CHECK (
-    auth.jwt() ->> 'role' = 'parliamentarian' OR auth.jwt() ->> 'role' = 'admin'
+    is_parliamentarian() OR is_admin()
   );
 
 -- Prevenir cambio de voto (no permitir UPDATE)
@@ -186,7 +207,7 @@ CREATE POLICY "No one can update votes" ON votes
 
 -- POLICIES para audit_logs (solo admins)
 CREATE POLICY "Admins can view audit logs" ON audit_logs
-  FOR SELECT USING (auth.jwt() ->> 'role' = 'admin');
+  FOR SELECT USING (is_admin());
 
 CREATE POLICY "System can insert audit logs" ON audit_logs
   FOR INSERT WITH CHECK (true);
@@ -196,7 +217,7 @@ CREATE POLICY "Anyone can view attendance" ON attendance
   FOR SELECT USING (true);
 
 CREATE POLICY "Admins can manage attendance" ON attendance
-  FOR ALL USING (auth.jwt() ->> 'role' = 'admin');
+  FOR ALL USING (is_admin());
 
 -- TRIGGERS para auditoría automática
 CREATE OR REPLACE FUNCTION log_audit()

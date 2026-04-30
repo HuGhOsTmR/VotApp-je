@@ -1,33 +1,59 @@
-import { type NextRequest } from 'next/server';
-import { updateSession } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+
+const publicRoutes = ['/auth/login', '/auth/register', '/public'];
+
+function hasSupabaseSession(request: NextRequest) {
+  return request.cookies.getAll().some((cookie) => cookie.name.startsWith('sb-'));
+}
+
+function getSupabaseCookies(request: NextRequest) {
+  return request.cookies.getAll().map((cookie) => ({
+    name: cookie.name,
+    value: cookie.value,
+  }));
+}
+
+async function refreshSupabaseSession(request: NextRequest, response: NextResponse) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing Supabase environment variables for middleware');
+  }
+
+  const supabase = createServerClient(supabaseUrl, supabaseKey, {
+    cookies: {
+      getAll: () => getSupabaseCookies(request),
+      setAll: (cookiesToSet, headers) => {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          response.cookies.set(name, value, options ?? {});
+        });
+        Object.entries(headers).forEach(([key, value]) => {
+          response.headers.set(key, value);
+        });
+      },
+    },
+  });
+
+  await supabase.auth.getSession();
+}
 
 export async function middleware(request: NextRequest) {
   console.log('[v0] Middleware processing:', request.nextUrl.pathname);
 
-  // Rutas públicas (sin protección)
-  const publicRoutes = ['/auth/login', '/auth/register', '/public'];
   const isPublicRoute = publicRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
   );
 
-  if (isPublicRoute) {
-    return await updateSession(request);
-  }
+  const response = NextResponse.next();
+  await refreshSupabaseSession(request, response);
 
-  // Actualizar sesión de Supabase
-  let response = await updateSession(request);
-
-  // Obtener token de la sesión
-  const supabaseResponse = response.clone();
-  const cookies = supabaseResponse.headers.getSetCookie();
-
-  // Verificar autenticación para rutas protegidas
   const authHeader = request.headers.get('authorization');
-  const hasSession = cookies.some((cookie) => cookie.includes('sb-'));
+  const hasSession = hasSupabaseSession(request);
 
   if (!authHeader && !hasSession && !isPublicRoute) {
-    // Redirigir a login si no está autenticado
-    return Response.redirect(new URL('/auth/login', request.url));
+    return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
   return response;
@@ -35,12 +61,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };

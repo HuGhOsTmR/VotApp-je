@@ -95,13 +95,12 @@ La aplicación estará disponible en `http://localhost:3000`
 
 ## Credenciales de Prueba
 
-Para pruebas iniciales, puedes crear usuarios con Supabase Auth:
+Para pruebas iniciales, utiliza la cuenta admin predeterminada:
 
 - **Email**: admin@diputados.bo (rol: admin)
-- **Email**: parlamentario@diputados.bo (rol: parliamentarian)
-- **Email**: observador@diputados.bo (rol: observer)
+- **Contraseña**: admin123
 
-**Contraseña**: Tu elección (cualquier contraseña funciona en desarrollo)
+Después de iniciar sesión, accede a `/admin/users` para crear otros usuarios.
 
 ## Uso
 
