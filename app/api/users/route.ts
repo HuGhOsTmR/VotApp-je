@@ -155,6 +155,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Si el rol es parlamentarian, crear automáticamente un parlamentario vinculado
+    if (role === 'parliamentarian') {
+      // Buscar un parlamentario sin user_id asignado
+      const { data: availableParliamentarian } = await supabase
+        .from('parliamentarians')
+        .select('id')
+        .is('user_id', null)
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+
+      if (availableParliamentarian) {
+        // Vincular el parlamentario al usuario
+        const { error: linkError } = await supabase
+          .from('parliamentarians')
+          .update({ user_id: userId })
+          .eq('id', availableParliamentarian.id);
+
+        if (linkError) {
+          console.error('[v0] Error linking parliamentarian:', linkError);
+          // No fallar la creación del usuario por esto, solo loggear
+        }
+      } else {
+        // Si no hay parlamentarios disponibles, crear uno básico
+        const { error: parliamentarianError } = await supabase
+          .from('parliamentarians')
+          .insert([
+            {
+              user_id: userId,
+              full_name,
+              political_party: 'Sin asignar',
+              circumscription: 'Sin asignar',
+              email,
+            },
+          ]);
+
+        if (parliamentarianError) {
+          console.error('[v0] Error creating parliamentarian:', parliamentarianError);
+          // No fallar la creación del usuario por esto, solo loggear
+        }
+      }
+    }
+
     return NextResponse.json({ success: true, data: profile }, { status: 201 });
   } catch (error) {
     console.error('[v0] Users POST error:', error);
@@ -237,6 +280,56 @@ export async function PATCH(request: NextRequest) {
         { success: false, error: profileError.message },
         { status: 400 }
       );
+    }
+
+    // Si el rol cambió a parlamentarian, crear/vincular parlamentario
+    if (role === 'parliamentarian') {
+      // Verificar si ya tiene un parlamentario vinculado
+      const { data: existingParliamentarian } = await supabase
+        .from('parliamentarians')
+        .select('id')
+        .eq('user_id', id)
+        .single();
+
+      if (!existingParliamentarian) {
+        // Buscar un parlamentario sin user_id asignado
+        const { data: availableParliamentarian } = await supabase
+          .from('parliamentarians')
+          .select('id')
+          .is('user_id', null)
+          .eq('is_active', true)
+          .limit(1)
+          .single();
+
+        if (availableParliamentarian) {
+          // Vincular el parlamentario al usuario
+          const { error: linkError } = await supabase
+            .from('parliamentarians')
+            .update({ user_id: id })
+            .eq('id', availableParliamentarian.id);
+
+          if (linkError) {
+            console.error('[v0] Error linking parliamentarian:', linkError);
+          }
+        } else {
+          // Si no hay parlamentarios disponibles, crear uno básico
+          const { error: parliamentarianError } = await supabase
+            .from('parliamentarians')
+            .insert([
+              {
+                user_id: id,
+                full_name: profile.full_name,
+                political_party: 'Sin asignar',
+                circumscription: 'Sin asignar',
+                email: profile.email,
+              },
+            ]);
+
+          if (parliamentarianError) {
+            console.error('[v0] Error creating parliamentarian:', parliamentarianError);
+          }
+        }
+      }
     }
 
     return NextResponse.json({ success: true, data: profile });

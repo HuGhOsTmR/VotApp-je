@@ -3,12 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('[v0] Parliamentarians GET called');
     const supabase = await createServerSupabaseClient();
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('user_id');
-    
-    console.log('[v0] Parliamentarians GET userId:', userId);
 
     let query = supabase
       .from('parliamentarians')
@@ -22,9 +19,6 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query.order('full_name', {
       ascending: true,
     });
-
-    console.log('[v0] Parliamentarians GET data:', data);
-    console.log('[v0] Parliamentarians GET error:', error);
 
     if (error) {
       return NextResponse.json(

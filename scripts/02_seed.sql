@@ -89,16 +89,6 @@ WHERE m.status = 'open'
 AND m.motion_type = 'resolution'
 LIMIT 20;
 
--- Datos de asistencia para la sesión actual
-INSERT INTO attendance (session_id, parliamentarian_id, status)
-SELECT
-  s.id,
-  p.id,
-  CASE
-    WHEN ROW_NUMBER() OVER (ORDER BY RANDOM()) <= 18 THEN 'present'
-    WHEN ROW_NUMBER() OVER (ORDER BY RANDOM()) <= 19 THEN 'absent'
-    ELSE 'excused'
-  END
-FROM sessions s
-CROSS JOIN parliamentarians p
-WHERE s.session_date = CURRENT_DATE;
+-- Vincular el primer parlamentario con un usuario ficticio para pruebas
+-- NOTA: En producción, esto debería hacerse a través de la aplicación
+-- UPDATE parliamentarians SET user_id = 'user-id-aqui' WHERE id = (SELECT id FROM parliamentarians LIMIT 1);
