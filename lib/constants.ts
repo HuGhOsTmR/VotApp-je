@@ -18,6 +18,7 @@ export const USER_ROLES = {
   PLATFORM_ADMIN: 'platform_admin',
   TENANT_ADMIN: 'tenant_admin',
   ADMIN: 'admin', // Legacy - maps to tenant_admin
+  SECRETARY: 'secretary',
   PARLIAMENTARIAN: 'parliamentarian',
   OBSERVER: 'observer',
 } as const;
@@ -26,6 +27,7 @@ export const ROLE_LABELS = {
   platform_admin: 'Super Administrador',
   tenant_admin: 'Administrador de Institución',
   admin: 'Administrador', // Legacy
+  secretary: 'Secretario',
   parliamentarian: 'Parlamentario',
   observer: 'Observador',
 } as const;
@@ -42,6 +44,7 @@ export const ROLE_PERMISSIONS = {
     'manage_parliamentarians',
     'view_audit_logs',
     'export_reports',
+    'manage_users',
   ],
   // Tenant admin manages their specific institution
   tenant_admin: [
@@ -62,6 +65,19 @@ export const ROLE_PERMISSIONS = {
     'manage_parliamentarians',
     'view_audit_logs',
     'export_reports',
+  ],
+  // Secretary: sessions/motions/attendance/quorum/voting control, no user/parl mgmt/delete/override
+  secretary: [
+    'view_all_data',
+    'create_session',
+    'update_session',
+    'create_motion',
+    'update_motion',
+    'open_close_motion',
+    'manage_attendance',
+    'view_quorum_progress',
+    'view_results',
+    'view_audit_logs',
   ],
   parliamentarian: [
     'view_active_motions',
@@ -215,6 +231,15 @@ export const NAV_ITEMS_ADMIN = [
   { label: 'Mi Perfil', href: '/admin/profile' },
 ] as const;
 
+export const NAV_ITEMS_SECRETARY = [
+  { label: 'Dashboard', href: '/secretary' },
+  { label: 'Sesiones', href: '/secretary/sessions' },
+  { label: 'Mociones', href: '/secretary/motions' },
+  { label: 'Asistencia', href: '/secretary/attendance' },
+  { label: 'Quórum & Resultados', href: '/secretary/quorum' },
+  { label: 'Auditoría', href: '/secretary/audit' },
+] as const;
+
 export const NAV_ITEMS_PARLIAMENTARIAN = [
   { label: 'Dashboard', href: '/parliamentarian' },
   { label: 'Votar', href: '/parliamentarian/voting' },
@@ -278,3 +303,4 @@ export const UI_CONFIG = {
   DEBOUNCE_DELAY: 300, // ms
   PAGINATION_SIZE: 20,
 } as const;
+

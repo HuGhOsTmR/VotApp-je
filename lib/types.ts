@@ -5,6 +5,7 @@ export enum UserRole {
   PLATFORM_ADMIN = 'platform_admin',
   TENANT_ADMIN = 'tenant_admin',
   ADMIN = 'admin', // Legacy - maps to tenant_admin
+  SECRETARY = 'secretary',
   PARLIAMENTARIAN = 'parliamentarian',
   OBSERVER = 'observer',
 }
@@ -314,3 +315,4 @@ export interface PaginatedResponse<T> {
   per_page: number;
   total_pages: number;
 }
+

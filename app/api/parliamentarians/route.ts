@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar si es admin
+    // Only admins manage parliamentarians (secretary cannot)
     const { data: profileData } = await supabase
       .from('user_profiles')
       .select('role')
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     if (profileData?.role !== 'admin') {
       return NextResponse.json(
-        { success: false, error: 'Forbidden' },
+        { success: false, error: 'Forbidden - Only admins can manage parliamentarians' },
         { status: 403 }
       );
     }
@@ -166,7 +166,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Verificar si es admin
+    // Only admins manage parliamentarians (secretary cannot)
     const { data: profileData } = await supabase
       .from('user_profiles')
       .select('role')
@@ -175,7 +175,7 @@ export async function PUT(request: NextRequest) {
 
     if (profileData?.role !== 'admin') {
       return NextResponse.json(
-        { success: false, error: 'Forbidden' },
+        { success: false, error: 'Forbidden - Only admins can manage parliamentarians' },
         { status: 403 }
       );
     }

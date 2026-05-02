@@ -43,16 +43,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar si es admin
+    // Verificar si es admin or secretary
     const { data: profileData } = await supabase
       .from('user_profiles')
       .select('role')
       .eq('id', userData.user.id)
       .single();
 
-    if (profileData?.role !== 'admin') {
+    if (!profileData || (profileData.role !== 'admin' && profileData.role !== 'secretary')) {
       return NextResponse.json(
-        { success: false, error: 'Forbidden' },
+        { success: false, error: 'Forbidden - Requires admin or secretary role' },
         { status: 403 }
       );
     }

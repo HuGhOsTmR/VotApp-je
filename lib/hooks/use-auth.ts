@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../supabase/client';
 import { UserProfile, UserRole } from '../types';
+import { ROLE_PERMISSIONS } from '@/lib/constants';
 
 export interface UseAuthReturn {
   user: UserProfile | null;
@@ -99,50 +100,7 @@ export function useAuth(): UseAuthReturn {
   const hasPermission = (permission: string): boolean => {
     if (!user) return false;
 
-    const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
-      platform_admin: [
-        'view_all_data',
-        'create_session',
-        'create_motion',
-        'close_motion',
-        'manage_parliamentarians',
-        'view_audit_logs',
-        'export_reports',
-        'manage_institutions',
-        'manage_users',
-      ],
-      tenant_admin: [
-        'view_all_data',
-        'create_session',
-        'create_motion',
-        'close_motion',
-        'manage_parliamentarians',
-        'view_audit_logs',
-        'export_reports',
-      ],
-      admin: [
-        'view_all_data',
-        'create_session',
-        'create_motion',
-        'close_motion',
-        'manage_parliamentarians',
-        'view_audit_logs',
-        'export_reports',
-      ],
-      parliamentarian: [
-        'view_active_motions',
-        'cast_vote',
-        'view_own_votes',
-        'view_results',
-      ],
-      observer: [
-        'view_active_motions',
-        'view_results',
-        'view_nominal_list',
-      ],
-    };
-
-    const permissions = ROLE_PERMISSIONS[user.role] || [];
+    const permissions = ROLE_PERMISSIONS[user.role as UserRole] || [];
     return permissions.includes(permission);
   };
 
@@ -157,3 +115,4 @@ export function useAuth(): UseAuthReturn {
     hasPermission,
   };
 }
+

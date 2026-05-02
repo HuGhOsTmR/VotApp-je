@@ -37,6 +37,8 @@ export default function HomePage() {
           // Redirigir según rol
           if (role === 'admin') {
             router.push('/admin');
+          } else if (role === 'secretary') {
+            router.push('/secretary');
           } else if (role === 'parliamentarian') {
             router.push('/parliamentarian');
           } else {

@@ -11,11 +11,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ConnectionStatus } from './connection-status';
-import { ROLE_LABELS } from '@/lib/constants';
+import { ROLE_LABELS, NAV_ITEMS_SECRETARY } from '@/lib/constants';
+import { usePathname } from 'next/navigation';
 
 export function Navbar() {
   const router = useRouter();
   const { user, userRole, logout, isAuthenticated } = useAuth();
+  const pathname = usePathname();
 
   const handleLogout = async () => {
     await logout();
@@ -29,7 +31,7 @@ export function Navbar() {
   return (
     <nav className="bg-blue-900 text-white shadow-md">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link href="/" className="text-2xl font-bold">
+        <Link href={userRole === 'secretary' ? '/secretary' : '/'} className="text-2xl font-bold">
           📋 Sistema Parlamentario
         </Link>
 

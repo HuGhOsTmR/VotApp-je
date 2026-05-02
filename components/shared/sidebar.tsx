@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/use-auth';
 import {
   NAV_ITEMS_ADMIN,
+  NAV_ITEMS_SECRETARY,
   NAV_ITEMS_PARLIAMENTARIAN,
   NAV_ITEMS_PUBLIC,
 } from '@/lib/constants';
@@ -16,7 +17,9 @@ export function Sidebar() {
 
   let navItems: readonly { label: string; href: string }[];
 
-  if (userRole === 'admin') {
+  if (userRole === 'secretary') {
+    navItems = NAV_ITEMS_SECRETARY;
+  } else if (userRole === 'admin') {
     navItems = NAV_ITEMS_ADMIN;
   } else if (userRole === 'parliamentarian') {
     navItems = NAV_ITEMS_PARLIAMENTARIAN;
