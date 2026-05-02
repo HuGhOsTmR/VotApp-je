@@ -13,20 +13,47 @@ export const MIN_VOTES_FOR_APPROVAL = 50; // Voto necesario para aprobar (en por
 export const VOTE_TIMEOUT_MINUTES = 120; // Tiempo máximo de votación en minutos
 export const MAX_VOTE_CHANGE_WINDOW_MINUTES = 5; // Ventana para cambiar voto (deshabilitada en producción)
 
-// ============ ROLES DE USUARIO ============
+// ============ ROLES DE USUARIO (Multi-Tenant) ============
 export const USER_ROLES = {
-  ADMIN: 'admin',
+  PLATFORM_ADMIN: 'platform_admin',
+  TENANT_ADMIN: 'tenant_admin',
+  ADMIN: 'admin', // Legacy - maps to tenant_admin
   PARLIAMENTARIAN: 'parliamentarian',
   OBSERVER: 'observer',
 } as const;
 
 export const ROLE_LABELS = {
-  admin: 'Administrador',
+  platform_admin: 'Super Administrador',
+  tenant_admin: 'Administrador de Institución',
+  admin: 'Administrador', // Legacy
   parliamentarian: 'Parlamentario',
   observer: 'Observador',
 } as const;
 
 export const ROLE_PERMISSIONS = {
+  // Platform admin can manage all institutions
+  platform_admin: [
+    'view_all_data',
+    'create_institution',
+    'manage_institution',
+    'create_session',
+    'create_motion',
+    'close_motion',
+    'manage_parliamentarians',
+    'view_audit_logs',
+    'export_reports',
+  ],
+  // Tenant admin manages their specific institution
+  tenant_admin: [
+    'view_all_data',
+    'create_session',
+    'create_motion',
+    'close_motion',
+    'manage_parliamentarians',
+    'view_audit_logs',
+    'export_reports',
+  ],
+  // Legacy admin role maps to tenant_admin
   admin: [
     'view_all_data',
     'create_session',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Motion, VoteType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -21,18 +21,35 @@ export function VotingInterface({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedVote, setSelectedVote] = useState<VoteType | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [hasVoted, setHasVoted] = useState(false);
   const { toast } = useToast();
 
+  // Use ref to track submission for idempotency
+  const submitInProgress = useRef(false);
+
   const handleVoteClick = (voteType: VoteType) => {
+    // Prevent double-click selection if already voted
+    if (hasVoted || isLoading) return;
     setSelectedVote(voteType);
     setShowConfirmation(true);
   };
 
-  const handleConfirmVote = async () => {
-    if (!selectedVote) return;
+  const handleConfirmVote = useCallback(async () => {
+    if (!selectedVote || submitInProgress.current) return;
+
+    // Idempotency check - prevent concurrent submissions
+    if (hasVoted) {
+      toast({
+        title: 'Información',
+        description: 'Ya has votado en esta moción',
+        variant: 'default',
+      });
+      return;
+    }
 
     try {
       setIsLoading(true);
+      submitInProgress.current = true;
 
       const response = await fetch('/api/votes', {
         method: 'POST',
@@ -55,11 +72,20 @@ export function VotingInterface({
         });
         setShowConfirmation(false);
         setSelectedVote(null);
+        setHasVoted(true);
         onVoteSuccess?.();
       } else {
+        // Handle specific error cases
+        const errorMessage = result.error || result.message || 'Error al registrar el voto';
+        
+        // If duplicate vote, mark as already voted
+        if (result.error === 'duplicate_vote' || result.error === 'already_voted') {
+          setHasVoted(true);
+        }
+
         toast({
           title: 'Error',
-          description: result.error || 'Error al registrar el voto',
+          description: errorMessage,
           variant: 'destructive',
         });
       }
@@ -72,8 +98,9 @@ export function VotingInterface({
       });
     } finally {
       setIsLoading(false);
+      submitInProgress.current = false;
     }
-  };
+  }, [selectedVote, motion.id, parliamentarianId, hasVoted, onVoteSuccess, toast]);
 
   const voteButtons: { type: VoteType; label: string; color: string }[] = [
     {
@@ -157,13 +184,15 @@ export function VotingInterface({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+{/* Mobile-optimized voting buttons - larger touch targets */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           {voteButtons.map((btn) => (
             <Button
               key={btn.type}
               onClick={() => handleVoteClick(btn.type)}
               disabled={isLoading}
-              className={`h-28 sm:h-24 text-lg font-bold text-white transition-all ${btn.color} flex flex-col items-center justify-center gap-2 w-full`}
+              className={`h-32 sm:h-24 md:h-28 text-base sm:text-lg font-bold text-white transition-all ${btn.color} flex flex-col items-center justify-center gap-1 sm:gap-2 rounded-xl sm:rounded-lg touch-manipulation select-none`}
+              style={{ minHeight: '80px' }}
             >
               <div className="text-3xl sm:text-2xl">
                 {btn.type === 'favor'
@@ -174,7 +203,7 @@ export function VotingInterface({
                       ? '🤐'
                       : '❌'}
               </div>
-              <span className="text-center">{btn.label}</span>
+              <span className="text-center text-sm sm:text-base leading-tight">{btn.label}</span>
             </Button>
           ))}
         </div>

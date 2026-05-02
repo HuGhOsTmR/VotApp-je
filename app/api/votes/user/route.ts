@@ -1,66 +1,60 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * Get the parliamentarian linked to the current authenticated user.
+ * Used by frontend to derive the voting identity.
+ */
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
 
-    // Verificar autenticación
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) {
+    // Verify authentication
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    // Obtener el parlamentario del usuario autenticado
-    const { data: parliamentarianData } = await supabase
-      .from('parliamentarians')
-      .select('id')
-      .eq('user_id', userData.user.id)
-      .single();
-
-    if (!parliamentarianData) {
-      return NextResponse.json({ success: true, data: [] });
-    }
-
-    // Obtener votos del parlamentario con detalles de la moción
-    const { data: votesData, error } = await supabase
-      .from('votes')
-      .select(
-        `
-        id,
-        motion_id,
-        vote_type,
-        timestamp,
-        motions(id, title, status)
-      `
-      )
-      .eq('parliamentarian_id', parliamentarianData.id)
-      .order('timestamp', { ascending: false });
+    // Get the parliamentarian linked to this user
+    const { data, error } = await supabase.rpc(
+      'get_current_user_parliamentarian'
+    );
 
     if (error) {
-      console.error('[v0] Error fetching user votes:', error);
+      console.error('[v0] Error getting user parliamentarian:', error);
       return NextResponse.json(
         { success: false, error: error.message },
-        { status: 400 }
+        { status: 500 }
       );
     }
 
-    // Transformar datos al formato esperado
-    const formattedVotes = (votesData || []).map((vote: any) => ({
-      id: vote.id,
-      motion_id: vote.motion_id,
-      motion_title: vote.motions?.title || 'Sin título',
-      motion_status: vote.motions?.status || 'unknown',
-      vote_type: vote.vote_type,
-      timestamp: vote.timestamp,
-    }));
+    // Check if there's a linked parliamentarian
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'no_linked_parliamentarian',
+          message: 'No tiene un parlamentario vinculado',
+        },
+        { status: 404 }
+      );
+    }
 
-    return NextResponse.json({ success: true, data: formattedVotes });
+    // Return the parliamentarian data (first result if array)
+    const parliamentarian = Array.isArray(data) ? data[0] : data;
+
+    return NextResponse.json({
+      success: true,
+      data: parliamentarian,
+    });
   } catch (error) {
-    console.error('[v0] User votes GET error:', error);
+    console.error('[v0] User parliamentarian GET error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

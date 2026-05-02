@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { ConnectionStatus } from '@/components/shared/connection-status';
+import { logger } from '@/lib/logger';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -167,7 +169,11 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <Card className="p-8 bg-white shadow-xl">
+<Card className="p-8 bg-white shadow-xl">
+          <div className="flex justify-end mb-4">
+            <ConnectionStatus showLabel={false} />
+          </div>
+          
           <h2 className="text-2xl font-bold mb-6 text-center text-slate-900">
             {showTwoFactor ? 'Verificación de Dos Factores' : 'Iniciar Sesión'}
           </h2>

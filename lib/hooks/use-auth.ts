@@ -21,19 +21,13 @@ export function useAuth(): UseAuthReturn {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // Obtener usuario actual
     const getUser = async () => {
       try {
         setIsLoading(true);
-
-        // Obtener sesión
-        const { data: sessionData, error: sessionError } =
-          await supabase.auth.getSession();
-
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
 
         if (sessionData?.session?.user) {
-          // Obtener perfil del usuario
           const { data: profileData, error: profileError } = await supabase
             .from('user_profiles')
             .select('*')
@@ -61,14 +55,12 @@ export function useAuth(): UseAuthReturn {
 
     getUser();
 
-    // Suscribirse a cambios de autenticación
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('[v0] Auth state changed:', event);
 
       if (session?.user) {
-        // Obtener perfil actualizado
         const { data: profileData } = await supabase
           .from('user_profiles')
           .select('*')
@@ -98,11 +90,9 @@ export function useAuth(): UseAuthReturn {
 
   const hasRole = (role: UserRole | UserRole[]): boolean => {
     if (!user) return false;
-
     if (Array.isArray(role)) {
       return role.includes(user.role);
     }
-
     return user.role === role;
   };
 
@@ -110,6 +100,26 @@ export function useAuth(): UseAuthReturn {
     if (!user) return false;
 
     const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
+      platform_admin: [
+        'view_all_data',
+        'create_session',
+        'create_motion',
+        'close_motion',
+        'manage_parliamentarians',
+        'view_audit_logs',
+        'export_reports',
+        'manage_institutions',
+        'manage_users',
+      ],
+      tenant_admin: [
+        'view_all_data',
+        'create_session',
+        'create_motion',
+        'close_motion',
+        'manage_parliamentarians',
+        'view_audit_logs',
+        'export_reports',
+      ],
       admin: [
         'view_all_data',
         'create_session',

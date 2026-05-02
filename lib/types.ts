@@ -2,7 +2,9 @@
 
 // ============ ENUMERACIONES ============
 export enum UserRole {
-  ADMIN = 'admin',
+  PLATFORM_ADMIN = 'platform_admin',
+  TENANT_ADMIN = 'tenant_admin',
+  ADMIN = 'admin', // Legacy - maps to tenant_admin
   PARLIAMENTARIAN = 'parliamentarian',
   OBSERVER = 'observer',
 }
@@ -54,12 +56,31 @@ export enum AuditAction {
   PARLIAMENTARIAN_UPDATED = 'parliamentarian_updated',
 }
 
+// ============ INSTITUTIONS (TENANTS) ============
+export interface Institution {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url?: string;
+  favicon_url?: string;
+  configuration?: Record<string, any>;
+  primary_color?: string;
+  secondary_color?: string;
+  public_title?: string;
+  public_description?: string;
+  is_active: boolean;
+  is_platform: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // ============ USUARIO Y AUTENTICACIÓN ============
 export interface UserProfile {
   id: string;
   email: string;
   full_name: string;
   role: UserRole;
+  institution_id?: string; // Multi-tenant: linking user to their institution
   is_active: boolean;
   two_factor_enabled?: boolean;
   two_factor_secret?: string;
@@ -77,6 +98,7 @@ export interface AuthSession {
 export interface Parliamentarian {
   id: string;
   user_id?: string;
+  institution_id?: string; // Multi-tenant: which institution this parliamentarian belongs to
   full_name: string;
   political_party: string;
   circumscription: string;
@@ -91,6 +113,7 @@ export interface Parliamentarian {
 // ============ SESIONES ============
 export interface Session {
   id: string;
+  institution_id?: string; // Multi-tenant: which institution this session belongs to
   legislature_number: number;
   session_date: string;
   start_time?: string;
@@ -108,6 +131,7 @@ export interface Session {
 export interface Motion {
   id: string;
   session_id: string;
+  institution_id?: string; // Multi-tenant: which institution this motion belongs to
   title: string;
   description?: string;
   proposer_id: string;
@@ -133,6 +157,7 @@ export interface MotionWithResults extends Motion {
 export interface Vote {
   id: string;
   motion_id: string;
+  institution_id?: string; // Multi-tenant: which institution this vote belongs to
   parliamentarian_id: string;
   vote_type: VoteType;
   ip_address?: string;
@@ -167,6 +192,7 @@ export interface MotionSummary {
 export interface Attendance {
   id: string;
   session_id: string;
+  institution_id?: string; // Multi-tenant: which institution this attendance belongs to
   parliamentarian_id: string;
   status: AttendanceStatus;
   created_at: string;
@@ -176,6 +202,7 @@ export interface Attendance {
 export interface AuditLog {
   id: string;
   user_id?: string;
+  institution_id?: string; // Multi-tenant: which institution this audit log belongs to
   action: AuditAction;
   entity_type: string;
   entity_id?: string;

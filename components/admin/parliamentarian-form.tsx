@@ -24,15 +24,21 @@ export function ParliamentarianForm({ parliamentarian, onSuccess }: Parliamentar
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [users, setUsers] = useState<UserProfile[]>([]);
-  const [formData, setFormData] = useState({
+  
+  const initialFormData: Record<string, string> = {
     full_name: parliamentarian?.full_name || '',
     political_party: parliamentarian?.political_party || '',
     circumscription: parliamentarian?.circumscription || '',
     email: parliamentarian?.email || '',
     phone_number: parliamentarian?.phone_number || '',
     photo_url: parliamentarian?.photo_url || '',
-    user_id: parliamentarian?.user_id || '',
-  });
+  };
+  
+  if (parliamentarian?.user_id) {
+    initialFormData.user_id = parliamentarian.user_id;
+  }
+  
+  const [formData, setFormData] = useState(initialFormData);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -97,8 +103,9 @@ export function ParliamentarianForm({ parliamentarian, onSuccess }: Parliamentar
           email: '',
           phone_number: '',
           photo_url: '',
-          user_id: '',
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (formData as any).user_id;
         onSuccess?.();
       } else {
         toast({

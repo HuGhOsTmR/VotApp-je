@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ConnectionStatus } from './connection-status';
 import { ROLE_LABELS } from '@/lib/constants';
 
 export function Navbar() {
@@ -33,6 +34,11 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-4">
+          {/* Connection Status Indicator */}
+          <div className="hidden sm:block">
+            <ConnectionStatus showLabel={true} />
+          </div>
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

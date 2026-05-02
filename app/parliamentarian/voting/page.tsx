@@ -6,6 +6,8 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { Card } from '@/components/ui/card';
 import { VotingInterface } from '@/components/parliamentarian/voting-interface';
 import { Spinner } from '@/components/ui/spinner';
+import { ConnectionStatus } from '@/components/shared/connection-status';
+import { logger } from '@/lib/logger';
 
 export default function VotingPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -29,19 +31,17 @@ export default function VotingPage() {
 
       try {
         setParliamentarianLoading(true);
-        const response = await fetch(
-          `/api/parliamentarians?user_id=${encodeURIComponent(user.id)}`
-        );
+        const response = await fetch('/api/votes/user');
         const result = await response.json();
 
-        if (result.success && Array.isArray(result.data) && result.data.length > 0) {
-          setParliamentarianId(result.data[0].id);
+        if (result.success && result.data) {
+          setParliamentarianId(result.data.id);
         } else {
           setParliamentarianId(null);
-          console.error('[v0] Parliamentarian lookup failed:', result);
+          logger.error('VOTING_PAGE', 'Parliamentarian lookup failed', result.error);
         }
       } catch (error) {
-        console.error('[v0] Error fetching parliamentarian:', error);
+        logger.error('VOTING_PAGE', 'Error fetching parliamentarian', error);
         setParliamentarianId(null);
       } finally {
         setParliamentarianLoading(false);
@@ -58,14 +58,13 @@ export default function VotingPage() {
       const result = await response.json();
 
       if (result.success) {
-        // Filtrar mociones abiertas
         const openMotions = (result.data || []).filter(
           (m: Motion) => m.status === 'open'
         );
         setMotions(openMotions);
       }
     } catch (error) {
-      console.error('[v0] Error fetching motions:', error);
+      logger.error('VOTING_PAGE', 'Error fetching motions', error);
     } finally {
       setIsLoading(false);
     }
@@ -132,11 +131,17 @@ export default function VotingPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-4xl font-bold text-slate-900">Votaciones</h1>
-        <p className="text-slate-600 mt-2">
-          Mociones abiertas para votación: {motions.length}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">Votaciones</h1>
+          <p className="text-slate-600 mt-2">
+            Mociones abiertas para votación: {motions.length}
+          </p>
+        </div>
+        {/* Connection Status for Mobile */}
+        <div className="sm:hidden">
+          <ConnectionStatus showLabel={true} />
+        </div>
       </div>
 
       {motions.length > 1 && (
@@ -177,7 +182,6 @@ export default function VotingPage() {
         motion={currentMotion}
         parliamentarianId={parliamentarianId}
         onVoteSuccess={() => {
-          // Recargar mociones después de votar
           fetchOpenMotions();
           if (selectedMotionIndex < motions.length - 1) {
             setSelectedMotionIndex(selectedMotionIndex + 1);
