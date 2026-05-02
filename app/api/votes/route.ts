@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('votes')
-      .select('*, parliamentarians(full_name, political_party)');
+      .select('*, parliamentarians(full_name, political_party, photo_url)');
 
     if (motionId) {
       query = query.eq('motion_id', motionId);
@@ -72,10 +72,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar que el parlamentario existe
+    // Verificar que el usuario actual tiene rol parlamentarian
+    const { data: profileData } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('id', userData.user.id)
+      .single();
+
+    if (profileData?.role !== 'parliamentarian') {
+      return NextResponse.json(
+        { success: false, error: 'Only parliamentarian users can cast votes' },
+        { status: 403 }
+      );
+    }
+
+    // Verificar que el parlamentario existe y pertenece al usuario actual
     const { data: parliamentarianData } = await supabase
       .from('parliamentarians')
-      .select('id')
+      .select('id,user_id')
       .eq('id', body.parliamentarian_id)
       .single();
 
@@ -83,6 +97,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Parliamentarian not found' },
         { status: 404 }
+      );
+    }
+
+    if (parliamentarianData.user_id !== userData.user.id) {
+      return NextResponse.json(
+        { success: false, error: 'You are not authorized to vote as this parliamentarian' },
+        { status: 403 }
       );
     }
 

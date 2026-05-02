@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   full_name VARCHAR(255) NOT NULL,
   role VARCHAR(50) NOT NULL CHECK (role IN ('admin', 'parliamentarian', 'observer')),
   is_active BOOLEAN DEFAULT true,
+  two_factor_enabled BOOLEAN DEFAULT false,
+  two_factor_secret TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

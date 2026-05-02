@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('session_id');
 
-    let query = supabase.from('motions').select('*, parliamentarians(*)');
+    let query = supabase.from('motions').select('*');
 
     if (sessionId) {
       query = query.eq('session_id', sessionId);

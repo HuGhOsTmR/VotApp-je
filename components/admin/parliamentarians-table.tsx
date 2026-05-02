@@ -13,6 +13,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ParliamentarianForm } from './parliamentarian-form';
 import { useToast } from '@/hooks/use-toast';
 
 export function ParliamentariansTable() {
@@ -65,7 +67,7 @@ export function ParliamentariansTable() {
     <Card className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Parlamentarios</h2>
-        <Button>Agregar Parlamentario</Button>
+        <ParliamentarianForm onSuccess={fetchParliamentarians} />
       </div>
 
       {isLoading ? (
@@ -86,6 +88,7 @@ export function ParliamentariansTable() {
                 <TableHead>Nombre Completo</TableHead>
                 <TableHead>Partido Político</TableHead>
                 <TableHead>Circunscripción</TableHead>
+                <TableHead>Cuenta vinculada</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Teléfono</TableHead>
                 <TableHead>Acciones</TableHead>
@@ -95,7 +98,21 @@ export function ParliamentariansTable() {
               {parliamentarians.map((parliamentarian) => (
                 <TableRow key={parliamentarian.id}>
                   <TableCell className="font-medium">
-                    {parliamentarian.full_name}
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        {parliamentarian.photo_url ? (
+                          <AvatarImage
+                            src={parliamentarian.photo_url}
+                            alt={parliamentarian.full_name}
+                          />
+                        ) : (
+                          <AvatarFallback>
+                            {parliamentarian.full_name.charAt(0)}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <span>{parliamentarian.full_name}</span>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Badge
@@ -107,7 +124,14 @@ export function ParliamentariansTable() {
                       {parliamentarian.political_party}
                     </Badge>
                   </TableCell>
-                  <TableCell>{parliamentarian.circumscription}</TableCell>
+                  <TableCell>{parliamentarian.circumscription || '-'}</TableCell>
+                  <TableCell>
+                    {parliamentarian.user_id ? (
+                      <span className="text-sm text-slate-700">{parliamentarian.user_id}</span>
+                    ) : (
+                      <span className="text-sm text-slate-500">Sin cuenta</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-sm">
                     {parliamentarian.email || '-'}
                   </TableCell>
@@ -115,9 +139,10 @@ export function ParliamentariansTable() {
                     {parliamentarian.phone_number || '-'}
                   </TableCell>
                   <TableCell>
-                    <Button variant="outline" size="sm">
-                      Editar
-                    </Button>
+                    <ParliamentarianForm
+                      parliamentarian={parliamentarian}
+                      onSuccess={fetchParliamentarians}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

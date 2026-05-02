@@ -34,9 +34,10 @@ export function MotionsTable() {
       if (result.success) {
         setMotions(result.data || []);
       } else {
+        console.error('[v0] /api/motions error result:', result);
         toast({
           title: 'Error',
-          description: 'No se pudieron cargar las mociones',
+          description: result.error || 'No se pudieron cargar las mociones',
           variant: 'destructive',
         });
       }

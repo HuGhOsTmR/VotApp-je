@@ -164,3 +164,126 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+async function ensureAdmin(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>) {
+  const supabaseClient = await supabase;
+  const { data: userData } = await supabaseClient.auth.getUser();
+  if (!userData.user) {
+    return { error: 'Unauthorized', status: 401 };
+  }
+
+  const { data: profileData, error: profileError } = await supabaseClient
+    .from('user_profiles')
+    .select('role')
+    .eq('id', userData.user.id)
+    .single();
+
+  if (profileError || profileData?.role !== 'admin') {
+    return { error: 'Forbidden', status: 403 };
+  }
+
+  return { error: null, status: 200 };
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, full_name, role, is_active, password } = body;
+
+    if (!id || !full_name || !role || typeof is_active !== 'boolean') {
+      return NextResponse.json(
+        { success: false, error: 'Todos los campos son obligatorios' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await createServerSupabaseClient();
+    const authCheck = await ensureAdmin(supabase);
+    if (authCheck.error) {
+      return NextResponse.json(
+        { success: false, error: authCheck.error },
+        { status: authCheck.status }
+      );
+    }
+
+    if (!isValidRole(role)) {
+      return NextResponse.json(
+        { success: false, error: 'Rol inválido' },
+        { status: 400 }
+      );
+    }
+
+    if (password) {
+      const { error: passwordError } = await supabase.auth.admin.updateUserById(id, {
+        password,
+      });
+      if (passwordError) {
+        return NextResponse.json(
+          { success: false, error: passwordError.message },
+          { status: 400 }
+        );
+      }
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('user_profiles')
+      .update({ full_name, role, is_active })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (profileError) {
+      return NextResponse.json(
+        { success: false, error: profileError.message },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data: profile });
+  } catch (error) {
+    console.error('[v0] Users PATCH error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: 'El id es obligatorio' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await createServerSupabaseClient();
+    const authCheck = await ensureAdmin(supabase);
+    if (authCheck.error) {
+      return NextResponse.json(
+        { success: false, error: authCheck.error },
+        { status: authCheck.status }
+      );
+    }
+
+    const { error: deleteError } = await supabase.auth.admin.deleteUser(id);
+    if (deleteError) {
+      return NextResponse.json(
+        { success: false, error: deleteError.message },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('[v0] Users DELETE error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

@@ -61,6 +61,8 @@ export interface UserProfile {
   full_name: string;
   role: UserRole;
   is_active: boolean;
+  two_factor_enabled?: boolean;
+  two_factor_secret?: string;
   created_at: string;
   updated_at: string;
 }
@@ -151,6 +153,8 @@ export interface MotionResults {
   absent_count: number;
   total_votes: number;
   quorum_met: boolean;
+  quorum_threshold?: number;
+  total_parliamentarians?: number;
 }
 
 export interface MotionSummary {

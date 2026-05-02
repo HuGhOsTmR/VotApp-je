@@ -17,6 +17,7 @@ export default function PublicDashboard() {
   const [motions, setMotions] = useState<MotionWithData[]>([]);
   const [selectedMotionIndex, setSelectedMotionIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
     fetchMotions();
@@ -51,6 +52,7 @@ export default function PublicDashboard() {
         );
 
         setMotions(motionsWithResults);
+        setLastUpdated(new Date());
       }
     } catch (error) {
       console.error('[v0] Error fetching motions:', error);
@@ -81,9 +83,16 @@ export default function PublicDashboard() {
         <p className="text-slate-600 text-lg">
           Brigada Parlamentaria de Cochabamba, Bolivia
         </p>
-        <p className="text-sm text-slate-500 mt-2">
-          Actualización automática cada 5 segundos
-        </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
+          <p className="text-sm text-slate-500">
+            Actualización automática cada 5 segundos
+          </p>
+          {lastUpdated && (
+            <p className="text-sm text-slate-500">
+              Última actualización: {lastUpdated.toLocaleTimeString()}
+            </p>
+          )}
+        </div>
       </div>
 
       {motions.length === 0 ? (

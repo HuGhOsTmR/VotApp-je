@@ -3,14 +3,8 @@
 import { Vote, Parliamentarian } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { VOTE_LABELS, VOTE_COLORS } from '@/lib/constants';
 
 interface NominalListProps {
@@ -31,11 +25,43 @@ export function NominalList({ votes }: NominalListProps) {
     {} as Record<string, typeof votes>
   );
 
+  const downloadCsv = (filename: string, rows: string[][]) => {
+    const csvRows = rows.map((row) =>
+      row
+        .map((value) => `"${String(value).replace(/"/g, '""')}"`)
+        .join(',')
+    );
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportNominal = () => {
+    const rows = [
+      ['Nombre', 'Partido', 'Voto'],
+      ...votes.map((vote) => [
+        vote.parliamentarians?.full_name || 'Parlamentario',
+        vote.parliamentarians?.political_party || 'Independiente',
+        VOTE_LABELS[vote.vote_type],
+      ]),
+    ];
+    downloadCsv('listado-nominal.csv', rows);
+  };
+
   return (
     <Card className="p-6 bg-white">
-      <h3 className="text-lg font-bold text-slate-900 mb-6">
-        Listado Nominal de Votos
-      </h3>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <h3 className="text-lg font-bold text-slate-900">Listado Nominal de Votos</h3>
+        <Button size="sm" variant="secondary" onClick={handleExportNominal}>
+          Exportar listado CSV
+        </Button>
+      </div>
 
       <div className="space-y-8">
         {Object.entries(votesByParty).map(([party, partyVotes]) => {
@@ -86,9 +112,28 @@ export function NominalList({ votes }: NominalListProps) {
                             : 'border-gray-200 bg-gray-50'
                     }`}
                   >
-                    <p className="font-semibold text-slate-900">
-                      {vote.parliamentarians?.full_name || 'Parlamentario'}
-                    </p>
+                    <div className="flex items-center gap-3 mb-3">
+                      <Avatar className="h-10 w-10">
+                        {vote.parliamentarians?.photo_url ? (
+                          <AvatarImage
+                            src={vote.parliamentarians.photo_url}
+                            alt={vote.parliamentarians.full_name}
+                          />
+                        ) : (
+                          <AvatarFallback>
+                            {vote.parliamentarians?.full_name?.charAt(0) || 'P'}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold text-slate-900">
+                          {vote.parliamentarians?.full_name || 'Parlamentario'}
+                        </p>
+                        <p className="text-sm text-slate-500">
+                          {vote.parliamentarians?.political_party || 'Independiente'}
+                        </p>
+                      </div>
+                    </div>
                     <Badge
                       className={`mt-2 ${
                         vote.vote_type === 'favor'

@@ -7,7 +7,8 @@ export const ORGANIZATION = 'Brigada Parlamentaria de Cochabamba';
 export const COUNTRY = 'Bolivia';
 
 // ============ CONFIGURACIÓN DE VOTACIÓN ============
-export const QUORUM_REQUIRED = 50; // Número mínimo de votos para quórum
+export const QUORUM_PERCENTAGE = 0.5; // 50% para mayoría absoluta
+export const QUORUM_REQUIRED = 50; // Número mínimo de votos para quórum (fallback)
 export const MIN_VOTES_FOR_APPROVAL = 50; // Voto necesario para aprobar (en porcentaje)
 export const VOTE_TIMEOUT_MINUTES = 120; // Tiempo máximo de votación en minutos
 export const MAX_VOTE_CHANGE_WINDOW_MINUTES = 5; // Ventana para cambiar voto (deshabilitada en producción)
@@ -184,6 +185,7 @@ export const NAV_ITEMS_ADMIN = [
   { label: 'Parlamentarios', href: '/admin/parliamentarians' },
   { label: 'Reportes', href: '/admin/reports' },
   { label: 'Auditoría', href: '/admin/audit' },
+  { label: 'Mi Perfil', href: '/admin/profile' },
 ] as const;
 
 export const NAV_ITEMS_PARLIAMENTARIAN = [

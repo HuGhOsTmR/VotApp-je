@@ -77,22 +77,22 @@ export function VotingInterface({
 
   const voteButtons: { type: VoteType; label: string; color: string }[] = [
     {
-      type: 'favor',
+      type: VoteType.FAVOR,
       label: VOTE_LABELS.favor,
       color: 'bg-green-600 hover:bg-green-700',
     },
     {
-      type: 'against',
+      type: VoteType.AGAINST,
       label: VOTE_LABELS.against,
       color: 'bg-red-600 hover:bg-red-700',
     },
     {
-      type: 'abstention',
+      type: VoteType.ABSTENTION,
       label: VOTE_LABELS.abstention,
       color: 'bg-yellow-600 hover:bg-yellow-700',
     },
     {
-      type: 'absent',
+      type: VoteType.ABSENT,
       label: VOTE_LABELS.absent,
       color: 'bg-gray-600 hover:bg-gray-700',
     },
@@ -118,7 +118,7 @@ export function VotingInterface({
             <Button
               onClick={handleConfirmVote}
               disabled={isLoading}
-              className="flex-1 h-16 text-lg font-bold bg-green-600 hover:bg-green-700"
+              className="flex-1 h-16 sm:h-12 text-lg font-bold bg-green-600 hover:bg-green-700"
             >
               {isLoading ? 'Confirmando...' : 'Confirmar Voto'}
             </Button>
@@ -129,7 +129,7 @@ export function VotingInterface({
               }}
               disabled={isLoading}
               variant="outline"
-              className="flex-1 h-16 text-lg font-bold"
+              className="flex-1 h-16 sm:h-12 text-lg font-bold"
             >
               Cancelar
             </Button>
@@ -157,26 +157,24 @@ export function VotingInterface({
           </p>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {voteButtons.map((btn) => (
             <Button
               key={btn.type}
               onClick={() => handleVoteClick(btn.type)}
               disabled={isLoading}
-              className={`h-24 text-lg font-bold text-white transition-all ${btn.color}`}
+              className={`h-28 sm:h-24 text-lg font-bold text-white transition-all ${btn.color} flex flex-col items-center justify-center gap-2 w-full`}
             >
-              <div className="flex flex-col items-center justify-center gap-2 w-full">
-                <div className="text-2xl">
-                  {btn.type === 'favor'
-                    ? '👍'
-                    : btn.type === 'against'
-                      ? '👎'
-                      : btn.type === 'abstention'
-                        ? '🤐'
-                        : '❌'}
-                </div>
-                <span>{btn.label}</span>
+              <div className="text-3xl sm:text-2xl">
+                {btn.type === 'favor'
+                  ? '👍'
+                  : btn.type === 'against'
+                    ? '👎'
+                    : btn.type === 'abstention'
+                      ? '🤐'
+                      : '❌'}
               </div>
+              <span className="text-center">{btn.label}</span>
             </Button>
           ))}
         </div>

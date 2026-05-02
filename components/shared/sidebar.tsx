@@ -14,7 +14,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { userRole } = useAuth();
 
-  let navItems: typeof NAV_ITEMS_ADMIN = [];
+  let navItems: readonly { label: string; href: string }[];
 
   if (userRole === 'admin') {
     navItems = NAV_ITEMS_ADMIN;
