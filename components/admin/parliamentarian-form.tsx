@@ -32,11 +32,8 @@ export function ParliamentarianForm({ parliamentarian, onSuccess }: Parliamentar
     email: parliamentarian?.email || '',
     phone_number: parliamentarian?.phone_number || '',
     photo_url: parliamentarian?.photo_url || '',
+    user_id: parliamentarian?.user_id || '',
   };
-  
-  if (parliamentarian?.user_id) {
-    initialFormData.user_id = parliamentarian.user_id;
-  }
   
   const [formData, setFormData] = useState(initialFormData);
   const { toast } = useToast();
@@ -103,9 +100,8 @@ export function ParliamentarianForm({ parliamentarian, onSuccess }: Parliamentar
           email: '',
           phone_number: '',
           photo_url: '',
+          user_id: '',
         });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        delete (formData as any).user_id;
         onSuccess?.();
       } else {
         toast({

@@ -101,7 +101,7 @@ export function useAuth(): UseAuthReturn {
     if (!user) return false;
 
     const permissions = ROLE_PERMISSIONS[user.role as UserRole] || [];
-    return permissions.includes(permission);
+    return permissions.some((p: string) => p === permission);
   };
 
   return {
