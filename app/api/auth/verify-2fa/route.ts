@@ -1,6 +1,8 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticator } from 'otplib';
+import authenticator from 'otplib/authenticator';
+
+export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {

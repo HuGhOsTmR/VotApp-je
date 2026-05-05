@@ -1,4 +1,4 @@
-'use client';
+// Removed 'use client' - now Server Component
 
 import { notFound } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
