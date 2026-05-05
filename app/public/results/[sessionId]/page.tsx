@@ -1,50 +1,121 @@
-// Removed 'use client' - now Server Component
+'use client'
 
-import { notFound } from 'next/navigation';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { Motion, Session, Vote, Parliamentarian } from '@/lib/types';
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
+import { supabase } from '@/lib/supabase/client';
+import { Motion } from '@/lib/types';
 import { ResultsDashboard } from '@/components/public/results-dashboard';
 import { NominalList } from '@/components/public/nominal-list';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { ChevronLeft, Download } from 'lucide-react';
 
-interface SessionResultsPageProps {
-  params: { sessionId: string };
+interface SessionData {
+  legislature_number: number;
+  session_date: string;
 }
 
-export default async function SessionResultsPage({ params }: SessionResultsPageProps) {
-  const supabase = await createServerSupabaseClient();
-  const { sessionId } = params;
+interface MotionData {
+  id: string;
+  title: string;
+  description: string;
+  proposer: {
+    full_name: string;
+  } | null;
+}
 
-  // Fetch session
-  const { data: session } = await supabase
-    .from('sessions')
-    .select('*')
-    .eq('id', sessionId)
-    .single();
+const demoResults = {
+  favor_count: 35,
+  against_count: 12,
+  abstention_count: 8,
+  absent_count: 5,
+  total_votes: 60,
+  quorum_met: true,
+};
 
-  if (!session) {
-    notFound();
-  }
+const demoVotes = Array.from({ length: 60 }, (_, i) => ({
+  id: `vote-${i}`,
+  vote_type: ['favor', 'against', 'abstention'][Math.floor(Math.random() * 3)] as any,
+  parliamentarian: {
+    full_name: `Parlamentario Demo ${i + 1}`,
+    political_party: ['MAS', 'CC', 'UN'][Math.floor(i % 3)],
+  },
+})) as any[];
 
-  // Fetch motions for session
-  const { data: motions } = await supabase
-    .from('motions')
-    .select('*, proposer:parliamentarians(full_name, political_party)')
-    .eq('session_id', sessionId)
-    .order('created_at', { ascending: false });
+export default function SessionResultsPage() {
+  const router = useRouter();
+  const params = useParams();
+  const sessionId = params?.sessionId as string;
 
-  // For demo, get first motion or latest
-  const demoMotion = motions?.[0];
-  if (!demoMotion) {
+  const [session, setSession] = useState<SessionData | null>(null);
+  const [motions, setMotions] = useState<MotionData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!sessionId) return;
+
+    async function fetchData() {
+      try {
+        setLoading(true);
+
+        // Fetch session
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('sessions')
+          .select('*')
+          .eq('id', sessionId)
+          .single();
+
+        if (sessionError || !sessionData) {
+          setError('Sesión no encontrada');
+          return;
+        }
+
+        setSession(sessionData);
+
+        // Fetch motions for session
+        const { data: motionsData, error: motionsError } = await supabase
+          .from('motions')
+          .select('*, proposer:parliamentarians(full_name, political_party)')
+          .eq('session_id', sessionId)
+          .order('created_at', { ascending: false });
+
+        if (motionsError) {
+          console.error('Error fetching motions:', motionsError);
+        } else {
+          setMotions(motionsData || []);
+        }
+      } catch (err) {
+        setError('Error al cargar los datos');
+        console.error('Fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [sessionId]);
+
+  if (loading) {
     return (
       <div className="container mx-auto px-4 py-12">
         <Card>
           <CardContent className="p-12 text-center">
-            <CardTitle className="text-2xl mb-4">Sin mociones</CardTitle>
-            <p className="text-slate-600 mb-8">Esta sesión no tiene mociones registradas aún.</p>
+            <CardTitle>Cargando resultados...</CardTitle>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error || !session) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <Card>
+          <CardContent className="p-12 text-center">
+            <CardTitle className="text-2xl mb-4">Error</CardTitle>
+            <p className="text-slate-600 mb-8">{error || 'Sesión no encontrada'}</p>
             <Link href="/public/results">
               <Button variant="outline">
                 <ChevronLeft className="w-4 h-4 mr-2" />
@@ -57,24 +128,7 @@ export default async function SessionResultsPage({ params }: SessionResultsPageP
     );
   }
 
-  // Demo results (replace with real API call)
-  const demoResults = {
-    favor_count: 35,
-    against_count: 12,
-    abstention_count: 8,
-    absent_count: 5,
-    total_votes: 60,
-    quorum_met: true,
-  };
-
-  const demoVotes = Array.from({ length: 60 }, (_, i) => ({
-    id: `vote-${i}`,
-    vote_type: ['favor', 'against', 'abstention'][Math.floor(Math.random() * 3)] as any,
-    parliamentarian: {
-      full_name: `Parlamentario Demo ${i + 1}`,
-      political_party: ['MAS', 'CC', 'UN'][Math.floor(i % 3)],
-    },
-  })) as any[];
+  const demoMotion = motions[0];
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -123,7 +177,7 @@ export default async function SessionResultsPage({ params }: SessionResultsPageP
       )}
 
       {/* More motions */}
-      {motions && motions.length > 1 && (
+      {motions.length > 1 && (
         <div>
           <h2 className="text-3xl font-bold text-slate-900 mb-8">
             Otras Mociones de esta Sesión
@@ -141,7 +195,7 @@ export default async function SessionResultsPage({ params }: SessionResultsPageP
                       Propuesto por {motion.proposer?.full_name}
                     </span>
                     <Button variant="outline" size="sm" asChild>
-                      <Link href={`/public/results/${session.id}#motion-${motion.id}`}>
+                      <Link href={`/public/results/${sessionId}#motion-${motion.id}`}>
                         Ver resultados
                       </Link>
                     </Button>

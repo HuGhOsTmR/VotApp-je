@@ -1,13 +1,26 @@
-# Next.js 16 + Turbopack Fix TODO
+# Fix Vercel Build Errors - Next.js 16 / Turbopack Compatibility
 
-## [x] 1. Fix otplib imports in 2FA routes (build blocker)
+## Completed (Pre-analysis):
+- Verified app/public/results/[sessionId]/page.tsx uses browser client correctly
+- Confirmed API auth routes use @otplib/preset-default and server client appropriately  
+- lib/supabase/client.ts & server.ts Next 16 compatible
+- @otplib/preset-default dependency installed
 
-## [x] 2. Fix app/public/results/[sessionId]/page.tsx (RSC refactor)
+## Current Status:
+- Local `pnpm build` fails on prerender /secretary page: useAuth() client hook called on server
 
-## [x] 3. lib/supabase/server.ts → NEXT_PUBLIC_SUPABASE_ANON_KEY
+## Steps:
 
-## [x] 4. next.config.mjs → experimental.turbo
+### 1. Fix /secretary prerender error (Blocking) ✓
+- Read files: page.tsx missing 'use client', calls useAuth() (client hook)
+- Fixed: Added 'use client' to app/secretary/page.tsx
 
-## [ ] 5. pnpm build -- verify success
+### 2. Address middleware deprecation warning (Optional) - Skipped (non-blocking)
 
-## [x] 6. Vercel-ready: runtime='nodejs' confirmed
+### 3. Verify clean build ✓
+- `pnpm build` succeeded! All pages prerendered, /secretary now static ○
+
+### 4. Vercel deployment test
+- Ready for deployment
+
+**Progress: COMPLETE - Build fixed. Ready for PR.**

@@ -1,6 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import authenticator from 'otplib/authenticator';
+import { authenticator } from '@otplib/preset-default';
 
 export const runtime = 'nodejs';
 
