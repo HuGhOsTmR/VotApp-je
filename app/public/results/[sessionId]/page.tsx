@@ -1,7 +1,8 @@
 'use client';
 
 import { notFound } from 'next/navigation';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+
+import { createClientSupabase } from '@/lib/supabase/client'
 import { Motion, Session, Vote, Parliamentarian } from '@/lib/types';
 import { ResultsDashboard } from '@/components/public/results-dashboard';
 import { NominalList } from '@/components/public/nominal-list';
