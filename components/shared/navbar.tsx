@@ -29,11 +29,18 @@ export function Navbar() {
   }
 
   return (
-    <nav className="bg-blue-900 text-white shadow-md">
+    <nav className="shadow-md bg-primary text-primary-foreground">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link href={userRole === 'secretary' ? '/secretary' : '/'} className="text-2xl font-bold">
-          📋 Sistema Parlamentario
+        <Link href={userRole === 'secretary' ? '/secretary' : '/'} className="flex items-center gap-3">
+          {/* Logo (SCZ) */}
+          <img
+            src="/SCZ escudo.png"
+            alt="SCZ - Libre o Basta"
+            className="h-9 w-9 rounded-sm object-contain"
+          />
+          <span className="text-2xl font-bold tracking-tight">Sistema Parlamentario</span>
         </Link>
+
 
         <div className="flex items-center gap-4">
           {/* Connection Status Indicator */}
@@ -45,7 +52,7 @@ export function Navbar() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="text-white hover:bg-blue-800"
+                className="text-primary-foreground hover:bg-accent/30 hover:text-accent-foreground"
               >
                 {user.full_name} ({ROLE_LABELS[userRole!]})
               </Button>
