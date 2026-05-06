@@ -225,6 +225,7 @@ export const NAV_ITEMS_ADMIN = [
   { label: 'Usuarios', href: '/admin/users' },
   { label: 'Sesiones', href: '/admin/sessions' },
   { label: 'Mociones', href: '/admin/motions' },
+  { label: 'Asistencia', href: '/admin/attendance' },
   { label: 'Parlamentarios', href: '/admin/parliamentarians' },
   { label: 'Reportes', href: '/admin/reports' },
   { label: 'Auditoría', href: '/admin/audit' },
