@@ -292,3 +292,62 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: 'Parliamentarian id is required' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await createServerSupabaseClient();
+
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { data: profileData } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('id', userData.user.id)
+      .single();
+
+    if (profileData?.role !== 'admin') {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden - Only admins can manage parliamentarians' },
+        { status: 403 }
+      );
+    }
+
+    const { data, error } = await supabase
+      .from('parliamentarians')
+      .update({ is_active: false, user_id: null })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    console.error('[v0] Parliamentarians DELETE error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

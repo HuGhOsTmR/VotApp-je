@@ -55,6 +55,35 @@ export function ParliamentariansTable() {
     }
   };
 
+  const handleDeleteParliamentarian = async (parliamentarianId: string) => {
+    if (!confirm('¿Seguro que deseas desactivar este parlamentario?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/parliamentarians?id=${parliamentarianId}`, { method: 'DELETE' });
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'No se pudo desactivar el parlamentario');
+      }
+
+      toast({
+        title: 'Parlamentario desactivado',
+        description: 'El parlamentario fue removido del listado activo',
+      });
+      fetchParliamentarians();
+    } catch (error) {
+      console.error('[v0] Error deleting parliamentarian:', error);
+      toast({
+        title: 'Error',
+        description:
+          error instanceof Error ? error.message : 'No se pudo desactivar el parlamentario',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const partyColors: Record<string, string> = {
     MAS: 'bg-red-100 text-red-800',
     UN: 'bg-green-100 text-green-800',
@@ -138,11 +167,18 @@ export function ParliamentariansTable() {
                   <TableCell className="text-sm">
                     {parliamentarian.phone_number || '-'}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="space-x-2 whitespace-nowrap">
                     <ParliamentarianForm
                       parliamentarian={parliamentarian}
                       onSuccess={fetchParliamentarians}
                     />
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteParliamentarian(parliamentarian.id)}
+                    >
+                      Eliminar
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
